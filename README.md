@@ -10,7 +10,9 @@ test에 원시코드가 있습니다.
 
 src/TestMiniC.java에 main 메서드가 있습니다.
 
-src/MiniCAstVisitor.java , src/Domain/AssembleyGenVisitor.java,  src/symboltable/SymbolTable.java 
+src/Domain/AssembleyGenVisitor.java
+src/MiniCAstVisitor.java   
+src/symboltable/SymbolTable.java 
 이 세가지 코드가 핵심이고 주석을 달았습니다.
 
 감사합니다.
