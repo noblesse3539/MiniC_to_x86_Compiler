@@ -1,0 +1,91 @@
+.section	.data
+a:
+	.int	500
+	.comm	b, 4
+	.comm	c, 40
+.section	.text
+	.globl	main
+main:
+	push	%ebp
+	mov	%esp, %ebp
+	sub	$20, %esp
+	mov	$10, 4(%esp)
+	mov	$2, %edx
+	mov	%edx, 0(%esp)
+	mov	4(%esp), %edx
+	mov	%edx, 0(%esp)
+	mov	$a, %edx
+	mov	%edx, 0(%esp)
+	mov	0(%esp), %edx
+	mov	%edx, $c+0
+	mov	$5, %edx
+	mov	%edx, 8(%esp)
+	mov	$10, %edx
+	mov	%edx, 12(%esp)
+	mov	$15, %edx
+	mov	%edx, 16(%esp)
+	mov	0(%esp), %eax
+	mov	4(%esp), %ecx
+	cmp	%ecx, %eax
+	jne	.L1
+	add	$1, 0(%esp)
+.L1:
+	mov	0(%esp), %eax
+	mov	2, %ecx
+	cmp	%ecx, %eax
+	je	.L2
+	sub	$1, 4(%esp)
+	jmp	.L3
+.L2:
+	mov	8(%esp), %edx
+	mov	%edx, %eax
+	mov	1, %ecx
+	add	%ecx, %eax
+	mov	%eax, %edx
+	mov	%edx, 4(%esp)
+.L3:
+.L4:
+	mov	0(%esp), %eax
+	mov	0, %ecx
+	cmp	%ecx, %eax
+	jl	.L5
+	mov	0(%esp), %eax
+	mov	1, %ecx
+	sub	%ecx, %eax
+	mov	%eax, %edx
+	mov	%edx, 0(%esp)
+	jmp	.L4
+.L5:
+	push	4(%esp)
+	lea	8(%esp), %edx
+	push	%edx
+	push	0(%esp)
+	call	foo
+	mov	$3, %eax
+	mov	%ebp, %esp
+	pop	%ebp
+	ret
+
+	.globl	foo
+foo:
+	push	%ebp
+	mov	%esp, %ebp
+	sub	$8, %esp
+	mov	8(%ebp), %edx
+	mov	%edx, 0(%esp)
+	mov	12(%ebp), %edx
+	mov	0(%edx), %edx
+	mov	%edx, %eax
+	mov	16(%ebp), %ecx
+	add	%ecx, %eax
+	mov	%eax, %edx
+	mov	%edx, 4(%esp)
+	mov	4(%esp), %eax
+	mov	0(%esp), %ecx
+	sub	%ecx, %eax
+	mov	%eax, %edx
+	mov	%edx, %eax
+	mov	%ebp, %esp
+	pop	%ebp
+	ret
+
