@@ -14,3 +14,5 @@ src/MiniCAstVisitor.java , src/Domain/AssembleyGenVisitor.java,  src/symboltable
 이 세가지 코드가 핵심이고 주석을 달았습니다.
 
 감사합니다.
+
+(콘솔창 출력결과를 result.txt에 옮겼습니다.)
