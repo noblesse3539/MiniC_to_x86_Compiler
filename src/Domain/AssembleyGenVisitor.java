@@ -36,28 +36,28 @@ import symboltable.SymbolTable;
 
 
 /********************************************************
- **** AST¸¦ ¼øÂ÷ÀûÀ¸·Î ¹æ¹®ÇÏ¿© x86¹®¹ıÀ¸·Î º¯È¯ÇÏ°í Ãâ·ÂÇÏ´Â ÇÁ·Î±×·¥ ****
+ **** ASTë¥¼ ìˆœì°¨ì ìœ¼ë¡œ ë°©ë¬¸í•˜ì—¬ x86ë¬¸ë²•ìœ¼ë¡œ ë³€í™˜í•˜ê³  ì¶œë ¥í•˜ëŠ” í”„ë¡œê·¸ë¨ ****
  ********************************************************
- * MiniCAstVisitor¿¡ ÀÇÇØ AST°¡ ¸¸µé¾îÁö¸é, °¢ ³ëµåµéÀ» ¼øÂ÷ÀûÀ¸·Î ¹æ¹®
- * ÇÏ¿© AssembleyÄÚµå·Î º¯È¯ÇÏ°í Ãâ·ÂÇÑ´Ù.
- * °¢ ³ëµå°´Ã¼´Â accept¶ó´Â ¸Ş¼­µå¸¦ °®°í ÀÖÀ¸¸ç, È£Ãâ ½Ã ¾Æ·¡ÀÇ visit 
- * ¸Ş¼­µå¸¦ ¹æ¹®ÇÑ´Ù.
+ * MiniCAstVisitorì— ì˜í•´ ASTê°€ ë§Œë“¤ì–´ì§€ë©´, ê° ë…¸ë“œë“¤ì„ ìˆœì°¨ì ìœ¼ë¡œ ë°©ë¬¸
+ * í•˜ì—¬ Assembleyì½”ë“œë¡œ ë³€í™˜í•˜ê³  ì¶œë ¥í•œë‹¤.
+ * ê° ë…¸ë“œê°ì²´ëŠ” acceptë¼ëŠ” ë©”ì„œë“œë¥¼ ê°–ê³  ìˆìœ¼ë©°, í˜¸ì¶œ ì‹œ ì•„ë˜ì˜ visit 
+ * ë©”ì„œë“œë¥¼ ë°©ë¬¸í•œë‹¤.
  * 
- * --ÇÙ½É ¸â¹öº¯¼ö-- 
- * - symTab	: º¯¼ö¸í, °ªµîÀÇ ½Éº¼À» ÇÏ³ªÀÇ ·¹ÄÚµå ÇüÅÂ·Î 
- *			    ÀúÀå, »èÁ¦, °Ë»ö±â´ÉÀ» ¼öÇàÇÏ´Â ÀÚ·á±¸Á¶.
+ * --í•µì‹¬ ë©¤ë²„ë³€ìˆ˜-- 
+ * - symTab	: ë³€ìˆ˜ëª…, ê°’ë“±ì˜ ì‹¬ë³¼ì„ í•˜ë‚˜ì˜ ë ˆì½”ë“œ í˜•íƒœë¡œ 
+ *			    ì €ì¥, ì‚­ì œ, ê²€ìƒ‰ê¸°ëŠ¥ì„ ìˆ˜í–‰í•˜ëŠ” ìë£Œêµ¬ì¡°.
  ********************************************************/
 public class AssembleyGenVisitor implements ASTVisitor {
 	private SymbolTable symTab = new SymbolTable();
-	private int label = 0; 		/*Á¶°ÇÀÌ³ª ¹İº¹¹® »ç¿ë ½Ã jmpÇÏ±â À§ÇØ »ç¿ë*/
-	private int offset = 0; 	/*Àü¿ª º¯¼öÀÇ ÁÖ¼Ò¸¦ Ã£¾Æ°¡±â À§ÇÑ º¯¼ö	*/
-	private int paramIndex=0; 	/*ÇÔ¼ö È£ÃâÀÌ ÀÌ·ç¾îÁú ¶§¸¶´Ù 0À¸·Î ÃÊ±âÈ­ µÊ.*/
+	private int label = 0; 		/*ì¡°ê±´ì´ë‚˜ ë°˜ë³µë¬¸ ì‚¬ìš© ì‹œ jmpí•˜ê¸° ìœ„í•´ ì‚¬ìš©*/
+	private int offset = 0; 	/*ì „ì—­ ë³€ìˆ˜ì˜ ì£¼ì†Œë¥¼ ì°¾ì•„ê°€ê¸° ìœ„í•œ ë³€ìˆ˜	*/
+	private int paramIndex=0; 	/*í•¨ìˆ˜ í˜¸ì¶œì´ ì´ë£¨ì–´ì§ˆ ë•Œë§ˆë‹¤ 0ìœ¼ë¡œ ì´ˆê¸°í™” ë¨.*/
 	
 
 	/*******************************************************
-	 * ¼½¼ÇÀ» .data¿Í .text·Î ºĞ·ùÇÏ¿© Ãâ·ÂÇÑ´Ù.
-	 * .data ¿µ¿ª¿¡¼­ Àü¿ªº¯¼öÀÇ ¼±¾ğ ¹× ÃÊ±âÈ­°¡ ÀÌ·ç¾îÁø´Ù. 
-	 * .text ¿µ¿ª¿¡¼­ °¢°¢ÀÇ ÇÔ¼öµéÀÌ ¾î¼Àºí¸® ÄÚµå·Î Ãâ·ÂµÈ´Ù.
+	 * ì„¹ì…˜ì„ .dataì™€ .textë¡œ ë¶„ë¥˜í•˜ì—¬ ì¶œë ¥í•œë‹¤.
+	 * .data ì˜ì—­ì—ì„œ ì „ì—­ë³€ìˆ˜ì˜ ì„ ì–¸ ë° ì´ˆê¸°í™”ê°€ ì´ë£¨ì–´ì§„ë‹¤. 
+	 * .text ì˜ì—­ì—ì„œ ê°ê°ì˜ í•¨ìˆ˜ë“¤ì´ ì–´ì…ˆë¸”ë¦¬ ì½”ë“œë¡œ ì¶œë ¥ëœë‹¤.
 	 *******************************************************/
 	@Override
 	public void visitProgram(Program node) {
@@ -91,7 +91,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 
 	/**************************************************
-	 * ÇÔ¼öÀÇ ÀÌ¸§°ú Å¸ÀÔ, ÆÄ¶ó¹ÌÅÍÀÇ °³¼ö¸¦ ÆÄ¾ÇÇÏ¿© ½Éº¼Å×ÀÌºí¿¡ »ğÀÔÇÑ´Ù.
+	 * í•¨ìˆ˜ì˜ ì´ë¦„ê³¼ íƒ€ì…, íŒŒë¼ë¯¸í„°ì˜ ê°œìˆ˜ë¥¼ íŒŒì•…í•˜ì—¬ ì‹¬ë³¼í…Œì´ë¸”ì— ì‚½ì…í•œë‹¤.
 	 **************************************************/
 	private void FunctionHeader(Function_Declaration child) {
 		// TODO Auto-generated method stub
@@ -110,7 +110,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 
 	/*********************
-	 * .section Ãâ·Â ¸Ş¼­µå
+	 * .section ì¶œë ¥ ë©”ì„œë“œ
 	 *********************/
 	private void emitSection(String string) {
 		// TODO Auto-generated method stub
@@ -125,9 +125,9 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 
 	/**************************************************
-	 *Àü¿ªº¯¼ö¼±¾ğÀ» ±¸ºĞÇÏ¿© ¾î¼Àºí¸®ÄÚµå·Î º¯È¯ÇÏ¿© Ãâ·ÂÇÑ´Ù.
-	 *¼±¾ğ½Ã ÇØ´ç º¯¼ö¿¡ ´ëÇÑ ´Ù¾çÇÑ Á¤º¸¸¦ ÇÏ³ªÀÇ ·¹ÄÚµå¿¡ ´ã°í ½Éº¼Å×ÀÌºí¿¡
-	 *»ğÀÔÇÑ´Ù.
+	 *ì „ì—­ë³€ìˆ˜ì„ ì–¸ì„ êµ¬ë¶„í•˜ì—¬ ì–´ì…ˆë¸”ë¦¬ì½”ë“œë¡œ ë³€í™˜í•˜ì—¬ ì¶œë ¥í•œë‹¤.
+	 *ì„ ì–¸ì‹œ í•´ë‹¹ ë³€ìˆ˜ì— ëŒ€í•œ ë‹¤ì–‘í•œ ì •ë³´ë¥¼ í•˜ë‚˜ì˜ ë ˆì½”ë“œì— ë‹´ê³  ì‹¬ë³¼í…Œì´ë¸”ì—
+	 *ì‚½ì…í•œë‹¤.
 	 **************************************************/
 	@Override
 	public void visitVariable_Declaration(Variable_Declaration node) {
@@ -171,12 +171,12 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 
 	/**************************************************
-	 * ÇÔ¼ö¼±¾ğºÎ.
-	 * Áö¿ªº¯¼ö ¼±¾ğÀº ¿ø·¡ Compound_StatementÀÇ ÀÚ½Ä³ëµåÀÌÁö¸¸, Compound_Statement´Â
-	 * while¹®ÀÌ³ª if¹®¿¡¼­µµ »ç¿ëµÈ´Ù. Áö¿ªº¯¼öÀÇ ¼±¾ğ À§Ä¡¸¦ ÇÔ¼ö ¼±¾ğ ¹Ù·Î ´ÙÀ½¿¡¸¸ ¿Ã ¼ö ÀÖµµ·Ï
-	 * ÇÏ±â À§ÇØ ÀÌ°÷¿¡¼­ Áö¿ªº¯¼öÀÇ ¼±¾ğÀ» ´ã´çÇÏµµ·Ï ¼³°èÇß´Ù. 
-	 * Áö¿ª º¯¼ö¿¡´ëÇÑ Á¤º¸´Â ¸¶Âù°¡Áö·Î ½Éº¼Å×ÀÌºíÀÌ »ğÀÔµÇ¸ç, ÇÔ¼ö°¡ Á¾·áµÇ¸é ½Éº¼Å×ÀÌºí¿¡¼­ ¸ğµÎ »èÁ¦
-	 * ÇÏµµ·Ï ¼³°èÇß´Ù.
+	 * í•¨ìˆ˜ì„ ì–¸ë¶€.
+	 * {ì§€ì—­ë³€ìˆ˜ ì„ ì–¸ì€ ì›ë˜ Compound_Statementì˜ ìì‹ë…¸ë“œì´ì§€ë§Œ, Compound_StatementëŠ”
+	 * whileë¬¸ì´ë‚˜ ifë¬¸ì—ì„œë„ ì‚¬ìš©ëœë‹¤. ì§€ì—­ë³€ìˆ˜ì˜ ì„ ì–¸ ìœ„ì¹˜ë¥¼ í•¨ìˆ˜ ì„ ì–¸ ë°”ë¡œ ë‹¤ìŒì—ë§Œ ì˜¬ ìˆ˜ ìˆë„ë¡
+	 * í•˜ê¸° ìœ„í•´ ì´ê³³ì—ì„œ ì§€ì—­ë³€ìˆ˜ì˜ ì„ ì–¸ì„ ë‹´ë‹¹í•˜ë„ë¡ ì„¤ê³„í–ˆë‹¤.} ì˜¤ë¥˜ ë‹¤ì‹œ ìˆ˜ì •í•´ì•¼ í•¨. 
+	 * ì§€ì—­ ë³€ìˆ˜ì—ëŒ€í•œ ì •ë³´ëŠ” ë§ˆì°¬ê°€ì§€ë¡œ ì‹¬ë³¼í…Œì´ë¸”ì´ ì‚½ì…ë˜ë©°, í•¨ìˆ˜ê°€ ì¢…ë£Œë˜ë©´ ì‹¬ë³¼í…Œì´ë¸”ì—ì„œ ëª¨ë‘ ì‚­ì œ
+	 * í•˜ë„ë¡ ì„¤ê³„í–ˆë‹¤.
 	 **************************************************/
 	@Override
 	public void visitFunction_Declaration(Function_Declaration node) {
@@ -184,7 +184,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 		String varName = node.t_node.getText();
 		int returnType = this.typeCheck(node.type);		// int : 1, void : 0
 		int numOfArguments;
-		int stackSize = this.symTab.symbolTable.size(); //ÇÔ¼ö Á¾·á½Ã ½Éº¼Å×ÀÌºí¿¡ ÀúÀåÇÑ Áö¿ªº¯¼ö¸¦ »èÁ¦ÇÏ±â À§ÇØ ÃÊ±â »çÀÌÁî¸¦ ÀúÀå.
+		int stackSize = this.symTab.symbolTable.size(); //í•¨ìˆ˜ ì¢…ë£Œì‹œ ì‹¬ë³¼í…Œì´ë¸”ì— ì €ì¥í•œ ì§€ì—­ë³€ìˆ˜ë¥¼ ì‚­ì œí•˜ê¸° ìœ„í•´ ì´ˆê¸° ì‚¬ì´ì¦ˆë¥¼ ì €ì¥.
 		if(node.params.params == null) {
 			numOfArguments = 0;
 		} else {
@@ -208,7 +208,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 				local_Decl_Size += 4;
 			}
 		}
-		this.emit("sub	$"+(local_Decl_Size) + ", %esp"); /* ½ºÅÃ¿¡ ·ÎÄÃº¯¼ö Å©±â ÁöÁ¤*/
+		this.emit("sub	$"+(local_Decl_Size) + ", %esp"); /* ìŠ¤íƒì— ë¡œì»¬ë³€ìˆ˜ í¬ê¸° ì§€ì •*/
 		iterator = node.compount_stmt.local_decls.iterator();
 		while(iterator.hasNext()) {
 			child = iterator.next();
@@ -217,7 +217,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 		
 		node.compount_stmt.accept(this);
 		this.emitFunc_Decl_End();
-		/*½Éº¼Å×ÀÌºí ½ºÅÃ ÃÊ±âÈ­ - ÇØ´ç ÇÔ¼ö¿¡¼­ »ğÀÔµÈ ¸ğµç ½Éº¼µé »èÁ¦*/
+		/*ì‹¬ë³¼í…Œì´ë¸” ìŠ¤íƒ ì´ˆê¸°í™” - í•´ë‹¹ í•¨ìˆ˜ì—ì„œ ì‚½ì…ëœ ëª¨ë“  ì‹¬ë³¼ë“¤ ì‚­ì œ*/
 		for (int i = this.symTab.symbolTable.size(); i > stackSize; i--) {
 			this.symTab.delete();
 		}
@@ -225,10 +225,10 @@ public class AssembleyGenVisitor implements ASTVisitor {
 
 
 	/**************************************************
-	 * ÀÚ½Ä³ëµåÀÎ ÆÄ¶ó¹ÌÅÍÀÇ accept()¸¦ ¼øÂ÷ÀûÀ¸·Î È£ÃâÇÑ´Ù.
-	 * child.accept()°¡ È£ÃâµÉ ¶§¸¶´Ù this.paramIndex´Â 1¾¿ Áõ
-	 * °¡ÇÏ±â ¶§¹®¿¡, ¸ğµç child¸¦ ¹æ¹®ÇÑ ÀÌÈÄ this.paramIndex¸¦ 0
-	 * À¸·Î ÃÊ±âÈ­ÇØÁØ´Ù.
+	 * ìì‹ë…¸ë“œì¸ íŒŒë¼ë¯¸í„°ì˜ accept()ë¥¼ ìˆœì°¨ì ìœ¼ë¡œ í˜¸ì¶œí•œë‹¤.
+	 * child.accept()ê°€ í˜¸ì¶œë  ë•Œë§ˆë‹¤ this.paramIndexëŠ” 1ì”© ì¦
+	 * ê°€í•˜ê¸° ë•Œë¬¸ì—, ëª¨ë“  childë¥¼ ë°©ë¬¸í•œ ì´í›„ this.paramIndexë¥¼ 0
+	 * ìœ¼ë¡œ ì´ˆê¸°í™”í•´ì¤€ë‹¤.
 	 **************************************************/
 	@Override
 	public void visitParameters(Parameters node) {
@@ -244,11 +244,11 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 
 	/**************************************************
-	 * visitParameter´Â ÇÔ¼ö¼±¾ğºÎ¿¡¼­ È£ÃâµÈ´Ù. ÇÔ¼ö ³»ºÎÀÇ ¾î¶² 
-	 * ¹®Àå¿¡¼­ ¸Å°³º¯¼ö¸¦ »ç¿ëÇÒ ¶§, ±× À§Ä¡¸¦ ¾Ë±â À§ÇØ ¸Å°³º¯¼öÀÇ Á¤º¸µµ
-	 * ½Éº¼Å×ÀÌºí¿¡ »ğÀÔÇÑ´Ù.
-	 * ½Éº¼ÀÌ ÆÄ¶ó¹ÌÅÍÀÎ °æ¿ì value¿¡ ÆÄ¶ó¹ÌÅÍ ÀÎµ¦½º¸¦ Áı¾î³Ö´Â´Ù. 
-	 * x86¿¡¼­ °¢ ÀÎµ¦½º¿¡ ÇØ´çÇÏ´Â ·¹Áö½ºÅÍ´Â 8(%ebp)ºÎÅÍ ½ÃÀÛÇÏ¿© Â÷·Ê·Î ¿Ã¶ó°£´Ù.
+	 * visitParameterëŠ” í•¨ìˆ˜ì„ ì–¸ë¶€ì—ì„œ í˜¸ì¶œëœë‹¤. í•¨ìˆ˜ ë‚´ë¶€ì˜ ì–´ë–¤ 
+	 * ë¬¸ì¥ì—ì„œ ë§¤ê°œë³€ìˆ˜ë¥¼ ì‚¬ìš©í•  ë•Œ, ê·¸ ìœ„ì¹˜ë¥¼ ì•Œê¸° ìœ„í•´ ë§¤ê°œë³€ìˆ˜ì˜ ì •ë³´ë„
+	 * ì‹¬ë³¼í…Œì´ë¸”ì— ì‚½ì…í•œë‹¤.
+	 * ì‹¬ë³¼ì´ íŒŒë¼ë¯¸í„°ì¸ ê²½ìš° valueì— íŒŒë¼ë¯¸í„° ì¸ë±ìŠ¤ë¥¼ ì§‘ì–´ë„£ëŠ”ë‹¤. 
+	 * x86ì—ì„œ ê° ì¸ë±ìŠ¤ì— í•´ë‹¹í•˜ëŠ” ë ˆì§€ìŠ¤í„°ëŠ” 8(%ebp)ë¶€í„° ì‹œì‘í•˜ì—¬ ì°¨ë¡€ë¡œ ì˜¬ë¼ê°„ë‹¤.
 	 **************************************************/
 	@Override
 	public void visitParameter(Parameter node) {
@@ -271,20 +271,20 @@ public class AssembleyGenVisitor implements ASTVisitor {
 
 	
 	/**************************************************
-	 * ÀÚ½Ä³ëµåÀÎ expr¿¡ ´ëÇÏ¿© visitExpression()À» È£ÃâÇÑ´Ù.
+	 * ìì‹ë…¸ë“œì¸ exprì— ëŒ€í•˜ì—¬ visitExpression()ì„ í˜¸ì¶œí•œë‹¤.
 	 **************************************************/
 	@Override
 	public void visitExpression_Statement(Expression_Statement node) {
 		// TODO Auto-generated method stub
-		// °¢ ¹®ÀåµéÀÇ Ã³¸®ºÎºĞ
+		// ê° ë¬¸ì¥ë“¤ì˜ ì²˜ë¦¬ë¶€ë¶„
 		node.expr.accept(this);
 	}
 
 	
 	/**************************************************
-	 * while¹®Àº x86¿¡¼­ µÎ°³ÀÇ ·¹ÀÌºíÀ» »ç¿ëÇÑ´Ù. 
-	 * ·¹ÀÌºíÀº »ç¿ëÇÒ ¶§¸¶´Ù ÇÊµåº¯¼öÀÎ this.labelÀ» 1¾¿ Áõ°¡ÇÏ¿© 
-	 * ·¹ÀÌºí ¸íÀ» º¯°æ½ÃÄÑÁØ´Ù.
+	 * whileë¬¸ì€ x86ì—ì„œ ë‘ê°œì˜ ë ˆì´ë¸”ì„ ì‚¬ìš©í•œë‹¤. 
+	 * ë ˆì´ë¸”ì€ ì‚¬ìš©í•  ë•Œë§ˆë‹¤ í•„ë“œë³€ìˆ˜ì¸ this.labelì„ 1ì”© ì¦ê°€í•˜ì—¬ 
+	 * ë ˆì´ë¸” ëª…ì„ ë³€ê²½ì‹œì¼œì¤€ë‹¤.
 	 **************************************************/
 	@Override
 	public void visitWhile_Statement(While_Statement node) {
@@ -302,10 +302,10 @@ public class AssembleyGenVisitor implements ASTVisitor {
 
 	
 	/**************************************************
-	 * Áß°ıÈ£{} ·Î ÀÌ·ç¾îÁø ºí·°´ÜÀ§ ¹®ÀåÀÌ´Ù.
-	 * C¾ğ¾îÀÇ Æ¯Â¡ÀÎ Áö¿ªº¯¼ö ¼±¾ğÀÌ ÇÔ¼öÀÇ °¡Àå À§¿¡¼­¸¸ ÀÌ·ç¾îÁö´Â °ÍÀ»
-	 * ±¸ÇöÇÏ±â À§ÇØ º¹ÇÕ¹® ³»¿¡¼± º¯¼ö¼±¾ğÀ» ¹«È¿·Î ÇÏ°í Statement¸¸ 
-	 * Ã³¸®ÇÑ´Ù.
+	 * ì¤‘ê´„í˜¸{} ë¡œ ì´ë£¨ì–´ì§„ ë¸”ëŸ­ë‹¨ìœ„ ë¬¸ì¥ì´ë‹¤.
+	 * Cì–¸ì–´ì˜ íŠ¹ì§•ì¸ ì§€ì—­ë³€ìˆ˜ ì„ ì–¸ì´ í•¨ìˆ˜ì˜ ê°€ì¥ ìœ„ì—ì„œë§Œ ì´ë£¨ì–´ì§€ëŠ” ê²ƒì„
+	 * êµ¬í˜„í•˜ê¸° ìœ„í•´ ë³µí•©ë¬¸ ë‚´ì—ì„  ë³€ìˆ˜ì„ ì–¸ì„ ë¬´íš¨ë¡œ í•˜ê³  Statementë§Œ 
+	 * ì²˜ë¦¬í•œë‹¤.
 	 **************************************************/
 	@Override
 	public void visitCompound_Statement(Compound_Statement node) {
@@ -325,12 +325,12 @@ public class AssembleyGenVisitor implements ASTVisitor {
 
 
 	/*******************************************************
-	 * Áö¿ªº¯¼ö ¼±¾ğÀº 3°¡Áö(Á¤¼öÇü ¹è¿­, Á¤¼ö, Á¤¼ö ¼±¾ğ ¹× ÇÒ´ç)·Î ±¸ºĞÇÑ´Ù.
-	 * ±¸ºĞÇÑ ÀÌÈÄ Àü¿ªº¯¼ö¿Í ¸¶Âù°¡Áö·Î º¯¼ö¿¡ ´ëÇÑ Á¤º¸¸¦ ½É¹úÅ×ÀÌºí¿¡ »ğÀÔÇÑ´Ù.
+	 * ì§€ì—­ë³€ìˆ˜ ì„ ì–¸ì€ 3ê°€ì§€(ì •ìˆ˜í˜• ë°°ì—´, ì •ìˆ˜, ì •ìˆ˜ ì„ ì–¸ ë° í• ë‹¹)ë¡œ êµ¬ë¶„í•œë‹¤.
+	 * êµ¬ë¶„í•œ ì´í›„ ì „ì—­ë³€ìˆ˜ì™€ ë§ˆì°¬ê°€ì§€ë¡œ ë³€ìˆ˜ì— ëŒ€í•œ ì •ë³´ë¥¼ ì‹¬ë²Œí…Œì´ë¸”ì— ì‚½ì…í•œë‹¤.
 	 *******************************************************/
 	@Override
 	public void visitLocal_Declaration(Local_Declaration node) {
-		/*Áö¿ªº¯¼ö¿¡ ´ëÇÑ offset ¼³Á¤ÇÏ¿© ½Éº¼Å×ÀÌºí¿¡ »ğÀÔ.*/
+		/*ì§€ì—­ë³€ìˆ˜ì— ëŒ€í•œ offset ì„¤ì •í•˜ì—¬ ì‹¬ë³¼í…Œì´ë¸”ì— ì‚½ì….*/
 		// TODO Auto-generated method stub
 		String varName = node.lhs.getText();
 		int type = this.typeCheck(node.type);	// int : 1, void : 0
@@ -339,21 +339,21 @@ public class AssembleyGenVisitor implements ASTVisitor {
 		int pre_Local_Offset = preR.getOffset();
 		int local_Offset = pre_Local_Offset + preR.getSize();
 		
-		if (node instanceof Local_Variable_Declaration_Array) { // Áö¿ª ¹è¿­ ¼±¾ğ
+		if (node instanceof Local_Variable_Declaration_Array) { // ì§€ì—­ ë°°ì—´ ì„ ì–¸
 			int arrSize = Integer.parseInt(((Local_Variable_Declaration_Array) node).rhs.getText());
 			int size = arrSize * this.typeSize(type);
 			r = new Record(varName , "LOCVARARR", type, 1, local_Offset, size, 0);		
 			this.symTab.insert(varName, r);
 		}
-		else if (node instanceof Local_Variable_Declaration_Assign) { // Áö¿ªº¯¼ö ¼±¾ğ ¹× ÃÊ±âÈ­
-			// MiniC Áö¿ªº¯¼ö ¼±¾ğ ¹× ÇÒ´ç¿¡¼­ rhs ¿¡ ¿Ã ¼ö ÀÖ´Â°ÍÀº ¸®ÅÍ·² »ÓÀÌ´Ù.
+		else if (node instanceof Local_Variable_Declaration_Assign) { // ì§€ì—­ë³€ìˆ˜ ì„ ì–¸ ë° ì´ˆê¸°í™”
+			// MiniC ì§€ì—­ë³€ìˆ˜ ì„ ì–¸ ë° í• ë‹¹ì—ì„œ rhs ì— ì˜¬ ìˆ˜ ìˆëŠ”ê²ƒì€ ë¦¬í„°ëŸ´ ë¿ì´ë‹¤.
 			int initialValue = Integer.parseInt(((Local_Variable_Declaration_Assign) node).rhs.getText());
 			int size = this.typeSize(type);
 			r = new Record(varName , "LOCVAR", type, 1, local_Offset, size, initialValue);
 			this.emitLocVarInit(local_Offset, initialValue);
 			this.symTab.insert(varName, r);
 		}
-		else { 	// Áö¿ªº¯¼ö ¼±¾ğ¸¸
+		else { 	// ì§€ì—­ë³€ìˆ˜ ì„ ì–¸ë§Œ
 			int size = this.typeSize(type);
 			r = new Record(varName , "LOCVAR", type, 1, local_Offset, size, 0);	
 			this.symTab.insert(varName, r);
@@ -367,8 +367,8 @@ public class AssembleyGenVisitor implements ASTVisitor {
 
 
 	/**********************************************************
-	 * if¹®Àº elseÀÇ À¯¹«¿¡ µû¶ó ·¹ÀÌºíÀÇ °¹¼ö°¡ ´Ş¶óÁø´Ù.
-	 * while¹®°ú ¸¶Âù°¡Áö·Î ·¹ÀÌºíÀº »ç¿ëÇÒ ¶§¸¶´Ù this.labelÀ» 1¾¿ Áõ°¡½ÃÅ²´Ù.
+	 * ifë¬¸ì€ elseì˜ ìœ ë¬´ì— ë”°ë¼ ë ˆì´ë¸”ì˜ ê°¯ìˆ˜ê°€ ë‹¬ë¼ì§„ë‹¤.
+	 * whileë¬¸ê³¼ ë§ˆì°¬ê°€ì§€ë¡œ ë ˆì´ë¸”ì€ ì‚¬ìš©í•  ë•Œë§ˆë‹¤ this.labelì„ 1ì”© ì¦ê°€ì‹œí‚¨ë‹¤.
 	 **********************************************************/
 	@Override
 	public void visitIf_Statement(If_Statement node) {
@@ -396,10 +396,10 @@ public class AssembleyGenVisitor implements ASTVisitor {
 
 
 	/**************************************************************
-	 * x86¿¡¼­ ¸®ÅÏ°ªÀº Ç×»ó eax¶ó´Â ·¹Áö½ºÅÍ¿¡ ÀúÀåµÈ´Ù. ¹İÈ¯ Å¸ÀÔÀÌ ÀÖ´Â 
-	 * ÇÔ¼ö¸¦ È£ÃâÇÑ ÀÌÈÄ, eaxÀÇ °ª¿£ ±× ÇÔ¼öÀÇ ¹İÈ¯°ªÀÌ µé¾îÀÖ°Ô µÈ´Ù.
-	 * ÇÔ¼ö Á¾·á½Ã returnÀ» ½ÃÅ°Áö ¾Ê¾Æµµ retÀÌ Ãâ·ÂµÇµµ·Ï ÇÏ±âÀ§ÇØ
-	 * this.emitFunc_Decl_End()¿¡¼­ ret Ãâ·ÂÀ» ÇÏ°í, ÇÔ¼ö ¼±¾ğºÎ¿¡¼­ È£ÃâÇÑ´Ù.
+	 * x86ì—ì„œ ë¦¬í„´ê°’ì€ í•­ìƒ eaxë¼ëŠ” ë ˆì§€ìŠ¤í„°ì— ì €ì¥ëœë‹¤. ë°˜í™˜ íƒ€ì…ì´ ìˆëŠ” 
+	 * í•¨ìˆ˜ë¥¼ í˜¸ì¶œí•œ ì´í›„, eaxì˜ ê°’ì—” ê·¸ í•¨ìˆ˜ì˜ ë°˜í™˜ê°’ì´ ë“¤ì–´ìˆê²Œ ëœë‹¤.
+	 * í•¨ìˆ˜ ì¢…ë£Œì‹œ returnì„ ì‹œí‚¤ì§€ ì•Šì•„ë„ retì´ ì¶œë ¥ë˜ë„ë¡ í•˜ê¸°ìœ„í•´
+	 * this.emitFunc_Decl_End()ì—ì„œ ret ì¶œë ¥ì„ í•˜ê³ , í•¨ìˆ˜ ì„ ì–¸ë¶€ì—ì„œ í˜¸ì¶œí•œë‹¤.
 	 **************************************************************/
 	@Override
 	public void visitReturn_Statement(Return_Statement node) {
@@ -419,13 +419,13 @@ public class AssembleyGenVisitor implements ASTVisitor {
 					if(arr != null) {
 						System.out.println("	mov	"+arr+", %eax");						
 					} else {
-						System.out.println("Return_Statement. Á¸ÀçÇÏÁö ¾Ê´Â º¯¼ö¸í");
+						System.out.println("Return_Statement. ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë³€ìˆ˜ëª…");
 						this.error(1);
 					}
 				}
 			} else { 
-				/**exprÀÌ nonterminal ÀÏ ¶§, accept ÀÌÈÄ °ªÀº %edx¿¡ ÀúÀå½ÃÅ²´Ù.
-				 **µû¶ó¼­ %edxÀÇ °ªÀ» %eax·Î ¿Å±ä´Ù. */
+				/**exprì´ nonterminal ì¼ ë•Œ, accept ì´í›„ ê°’ì€ %edxì— ì €ì¥ì‹œí‚¨ë‹¤.
+				 **ë”°ë¼ì„œ %edxì˜ ê°’ì„ %eaxë¡œ ì˜®ê¸´ë‹¤. */
 				node.expr.accept(this);
 				System.out.println("	mov	%edx, %eax");
 			}
@@ -436,12 +436,12 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	
 	
 	/*******************************************************
-	 * MiniC¿¡¼­ Çã¿ëÇÏ´Â ExprÀº  ¹è¿­ ÂüÁ¶, ¹è¿­ ÂüÁ¶ ÇÒ´ç, º¯¼ö¿¡ °ª ÇÒ´ç,
-	 * ÆÇº°½Ä, ´ÜÇ×¿¬»ê, ÇÔ¼ö È£Ãâ, °ıÈ£ µîÀÌ ÀÖ´Ù.
-	 * ´õ ÀÛ°Ô´Â ÅÍ¹Ì³Î ³ëµå·Î °¢ º¯¼ö¸íÀÌ³ª ¸®ÅÍ·²À» ³ªÅ¸³¾ ¶§¿¡µµ »ç¿ëÇÏÁö¸¸, 
-	 * ÅÍ¹Ì³Î ³ëµåÀÇ °æ¿ì ÇØ´ç ³ëµåÀÇ ÀÌ¸§¸¸ ÇÊ¿äÇÏ¹Ç·Î acceptÇÏÁö ¾Ê°í 
-	 * toString()À» ÅëÇØ °¡Á®¿Â´Ù.
-	 * ExprÀÇ Á¾·ù¿¡ µû¶ó x86¿¡¼­ ¼öÇàÇÏ´Â ¹®ÀåµéÀÌ ´Ù ´Ş¶óÁö¹Ç·Î ±¸ºĞÇÏ¿© Ã³¸®ÇÑ´Ù.
+	 * MiniCì—ì„œ í—ˆìš©í•˜ëŠ” Exprì€  ë°°ì—´ ì°¸ì¡°, ë°°ì—´ ì°¸ì¡° í• ë‹¹, ë³€ìˆ˜ì— ê°’ í• ë‹¹,
+	 * íŒë³„ì‹, ë‹¨í•­ì—°ì‚°, í•¨ìˆ˜ í˜¸ì¶œ, ê´„í˜¸ ë“±ì´ ìˆë‹¤.
+	 * ë” ì‘ê²ŒëŠ” í„°ë¯¸ë„ ë…¸ë“œë¡œ ê° ë³€ìˆ˜ëª…ì´ë‚˜ ë¦¬í„°ëŸ´ì„ ë‚˜íƒ€ë‚¼ ë•Œì—ë„ ì‚¬ìš©í•˜ì§€ë§Œ, 
+	 * í„°ë¯¸ë„ ë…¸ë“œì˜ ê²½ìš° í•´ë‹¹ ë…¸ë“œì˜ ì´ë¦„ë§Œ í•„ìš”í•˜ë¯€ë¡œ acceptí•˜ì§€ ì•Šê³  
+	 * toString()ì„ í†µí•´ ê°€ì ¸ì˜¨ë‹¤.
+	 * Exprì˜ ì¢…ë¥˜ì— ë”°ë¼ x86ì—ì„œ ìˆ˜í–‰í•˜ëŠ” ë¬¸ì¥ë“¤ì´ ë‹¤ ë‹¬ë¼ì§€ë¯€ë¡œ êµ¬ë¶„í•˜ì—¬ ì²˜ë¦¬í•œë‹¤.
 	 *******************************************************/
 	@Override
 	public void visitExpression(Expression node) {
@@ -454,17 +454,17 @@ public class AssembleyGenVisitor implements ASTVisitor {
 			Expression rhs = ((ArefAssignNode) node).rhs;
 			if(rhs instanceof TerminalExpression) { 
 				String tnode = ((TerminalExpression) rhs).t_node.toString();
-				if (this.isNum(tnode)) { // ¿ìº¯ÀÌ ÅÍ¹Ì³ÎÀÏ ¶§ ¸®ÅÍ·²ÀÎÁö º¯¼öÀÎÁö.
+				if (this.isNum(tnode)) { // ìš°ë³€ì´ í„°ë¯¸ë„ì¼ ë•Œ ë¦¬í„°ëŸ´ì¸ì§€ ë³€ìˆ˜ì¸ì§€.
 					rAddr = "$"+tnode;
 				} else {
-					rAddr = this.discTerminal(tnode); // rhs ÁÖ¼Ò
+					rAddr = this.discTerminal(tnode); // rhs ì£¼ì†Œ
 				}
 				System.out.println("	mov	"+rAddr+", %edx");
 			} else { 
 				/************************************************************
-				 * rhs ´Â non terminal ÀÌ¹Ç·Î ÇÑ¹ø ´õ accept ÇØÁØ´Ù.
-				 * x[1] = a+b; ¿Í °°Àº Çü½ÄÀÏ °æ¿ì a+b¿¡ ´ëÇÑ exprVisitor¸¦ ¹æ¹®ÇÒ °ÍÀÌ°í, 
-				 * ±× °á°ú°¡ %edx¿¡ ÀúÀåµÈ´Ù. 
+				 * rhs ëŠ” non terminal ì´ë¯€ë¡œ í•œë²ˆ ë” accept í•´ì¤€ë‹¤.
+				 * x[1] = a+b; ì™€ ê°™ì€ í˜•ì‹ì¼ ê²½ìš° a+bì— ëŒ€í•œ exprVisitorë¥¼ ë°©ë¬¸í•  ê²ƒì´ê³ , 
+				 * ê·¸ ê²°ê³¼ê°€ %edxì— ì €ì¥ëœë‹¤. 
 				 ************************************************************/
 				rhs.accept(this); 
 			}
@@ -472,25 +472,25 @@ public class AssembleyGenVisitor implements ASTVisitor {
 				Expression lhs = ((ArefAssignNode) node).lhs;
 				if(lhs instanceof TerminalExpression) {
 					String tnode = ((TerminalExpression) lhs).t_node.toString();
-					if (this.isNum(tnode)) { // ¿ìº¯ÀÌ ÅÍ¹Ì³ÎÀÏ ¶§ ¸®ÅÍ·²ÀÎÁö º¯¼öÀÎÁö.
+					if (this.isNum(tnode)) { // ìš°ë³€ì´ í„°ë¯¸ë„ì¼ ë•Œ ë¦¬í„°ëŸ´ì¸ì§€ ë³€ìˆ˜ì¸ì§€.
 						int arrayIndex = Integer.parseInt(tnode);
 						lAddr = this.discTerminal(name, arrayIndex);
 						System.out.println("	mov	%edx, " + lAddr);
 					} else {
-						// ¹Ì±¸Çö. x[y] = 1 Çü½Ä
-						System.out.println("ArefAssignNode ¹Ì±¸Çö. x[y] = 1 Çü½Ä");
+						// ë¯¸êµ¬í˜„. x[y] = 1 í˜•ì‹
+						System.out.println("ArefAssignNode ë¯¸êµ¬í˜„. x[y] = 1 í˜•ì‹");
 						this.error(1);
 					}
 				} else {
-					// ¹Ì±¸Çö. x[1+2] = 1 Çü½Ä
+					// ë¯¸êµ¬í˜„. x[1+2] = 1 í˜•ì‹
 					//((ArefAssignNode) node).lhs.accept(this);
-					System.out.println("ArefAssignNode ¹Ì±¸Çö. x[1+2] = 1 Çü½Ä");
+					System.out.println("ArefAssignNode ë¯¸êµ¬í˜„. x[1+2] = 1 í˜•ì‹");
 					this.error(1);
 				}
 				
 			}
 			else {
-				System.out.println("ArefAssignº¯¼ö°¡ Á¸ÀçÇÏÁö ¾ÊÀ½.");
+				System.out.println("ArefAssignë³€ìˆ˜ê°€ ì¡´ì¬í•˜ì§€ ì•ŠìŒ.");
 				this.error(1);
 			}
 		}
@@ -500,19 +500,19 @@ public class AssembleyGenVisitor implements ASTVisitor {
 			if(expr instanceof TerminalExpression) {
 				int arrayIndex;
 				String tnode = ((TerminalExpression) expr).t_node.toString();
-				if(this.isNum(tnode)) { // x[1] Çü½Ä
+				if(this.isNum(tnode)) { // x[1] í˜•ì‹
 					String arrayAddr;
 					arrayIndex = Integer.parseInt(tnode);
 					arrayAddr = this.discTerminal(name, arrayIndex);
 					System.out.println("	mov	"+arrayAddr+", %edx");
 				} else {
-					// ¹Ì±¸Çö. x[y] Çü½Ä.
-					System.out.println("ArefNode ¹Ì±¸Çö. x[y] Çü½Ä.");
+					// ë¯¸êµ¬í˜„. x[y] í˜•ì‹.
+					System.out.println("ArefNode ë¯¸êµ¬í˜„. x[y] í˜•ì‹.");
 					this.error(1);
 				}
 			} else {
-				// ¹Ì¿Ï¼º. x[1+2] ¿Í °°Àº Çü½Ä
-				System.out.println("ArefNode ¹Ì±¸Çö. x[1+2] ¿Í °°Àº Çü½Ä.");
+				// ë¯¸ì™„ì„±. x[1+2] ì™€ ê°™ì€ í˜•ì‹
+				System.out.println("ArefNode ë¯¸êµ¬í˜„. x[1+2] ì™€ ê°™ì€ í˜•ì‹.");
 				this.error(1);
 			}
 		}
@@ -521,7 +521,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 			lAddr = this.discTerminal(name);
 			Expression expr = ((AssignNode) node).expr;
 			if(lAddr != null) {
-				if (expr instanceof TerminalExpression) { // ¿ìº¯ÀÌ ÅÍ¹Ì³ÎÀÏ¶§
+				if (expr instanceof TerminalExpression) { // ìš°ë³€ì´ í„°ë¯¸ë„ì¼ë•Œ
 					String tnode = ((TerminalExpression) expr).t_node.toString();
 					if(this.isNum(tnode)) {
 						rAddr = "$"+tnode;
@@ -530,21 +530,21 @@ public class AssembleyGenVisitor implements ASTVisitor {
 					}
 					System.out.println("	mov	"+rAddr+ ", %edx" +"\n" +
 									   "	mov	%edx, "+lAddr);
-				} else { // ¿ìº¯ÀÌ ³íÅÍ¹Ì³ÎÀÏ ¶§
+				} else { // ìš°ë³€ì´ ë…¼í„°ë¯¸ë„ì¼ ë•Œ
 					expr.accept(this);
 					System.out.println("	mov	%edx"+", "+lAddr);
 				}
 			}else {
-				System.out.println(" AssignNode : Á¸ÀçÇÏÁö ¾Ê´Â º¯¼ö");
+				System.out.println(" AssignNode : ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë³€ìˆ˜");
 			}
 		}
-		else if ( node instanceof BinaryOpNode) { // lhs º¯¼ö´Â eax¿¡, rhs º¯¼ö´Â ecx¿¡ ÀúÀåÇÑ´Ù.
+		else if ( node instanceof BinaryOpNode) { // lhs ë³€ìˆ˜ëŠ” eaxì—, rhs ë³€ìˆ˜ëŠ” ecxì— ì €ì¥í•œë‹¤.
 			Expression lhs = ((BinaryOpNode) node).lhs;
 			Expression rhs = ((BinaryOpNode) node).rhs;
 			String terminal1, terminal2;
 			int val1, val2;
 			
-			// lhs ¸¦ %eax ·Î ¿Å°Ü ´ãÀ½.
+			// lhs ë¥¼ %eax ë¡œ ì˜®ê²¨ ë‹´ìŒ.
 			if (lhs instanceof TerminalExpression) {
 				terminal1 = ((TerminalExpression) lhs).t_node.toString();
 				if (this.isNum(terminal1)) {
@@ -555,7 +555,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 					if(lAddr != null) {
 						System.out.println("	mov	"+ lAddr + ", %eax");						
 					} else {
-						System.out.println("BinaryOpNode lhs : Á¸ÀçÇÏÁö ¾Ê´Â º¯¼ö¸í");
+						System.out.println("BinaryOpNode lhs : ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë³€ìˆ˜ëª…");
 						this.error(1);
 					}
 				}
@@ -564,7 +564,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 				System.out.println("	mov	%edx, %eax");
 			}
 			
-			// rhs ¸¦ %ecx ·Î ¿Å°Ü ´ãÀ½.
+			// rhs ë¥¼ %ecx ë¡œ ì˜®ê²¨ ë‹´ìŒ.
 			if (rhs instanceof TerminalExpression) {
 				terminal2 = ((TerminalExpression) rhs).t_node.toString();
 				if (this.isNum(terminal2)) {
@@ -576,7 +576,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 					if(rAddr != null) {
 						System.out.println("	mov	"+ rAddr + ", %ecx");						
 					} else {
-						System.out.println("BinaryOpNode rhs : Á¸ÀçÇÏÁö ¾Ê´Â º¯¼ö¸í");
+						System.out.println("BinaryOpNode rhs : ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë³€ìˆ˜ëª…");
 						this.error(1);
 					}
 				}
@@ -590,7 +590,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 			String funName = ((FuncallNode) node).t_node.toString();
 	         stIndex = this.symTab.lookUp(funName);
 	         if ( stIndex < 0) {
-	            System.out.println("ÇÔ¼ö°¡ Á¤ÀÇµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+	            System.out.println("í•¨ìˆ˜ê°€ ì •ì˜ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
 	            this.error(1);
 	         }
 	         else {
@@ -598,7 +598,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	            String[] arguments = argument.split(", ");
 	            int numberOfArgument = arguments.length;
 	            if(numberOfArgument > 4) {
-	            	System.out.println("ÇØ´ç ÄÄÆÄÀÏ·¯´Â ÀÎÀÚ¸¦ 4°³±îÁö¸¸ ¹Ş½À´Ï´Ù.");
+	            	System.out.println("í•´ë‹¹ ì»´íŒŒì¼ëŸ¬ëŠ” ì¸ìë¥¼ 4ê°œê¹Œì§€ë§Œ ë°›ìŠµë‹ˆë‹¤.");
 	            	this.error(1);
 	            }
 	            int val;
@@ -613,14 +613,14 @@ public class AssembleyGenVisitor implements ASTVisitor {
 						if (arg != null) {
 							System.out.println("	push	"+arg);
 						} else {
-							System.out.println("FuncallNode : Á¸ÀçÇÏÁö ¾Ê´Â º¯¼ö¸í");
+							System.out.println("FuncallNode : ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë³€ìˆ˜ëª…");
 						}
 					}
 	            }
 	            System.out.println("\t"+ "call" + "\t" + funName );            
 	         }
 		}
-		else if ( node instanceof ParenExpression) {	// °ıÈ£ () ¹Ì±¸Çö
+		else if ( node instanceof ParenExpression) {	// ê´„í˜¸ () ë¯¸êµ¬í˜„
 	
 		}
 		else if ( node instanceof TerminalExpression) {
@@ -633,17 +633,17 @@ public class AssembleyGenVisitor implements ASTVisitor {
 			if (expr instanceof TerminalExpression) {
 				terminal = ((TerminalExpression) expr).t_node.toString();
 				if (this.isNum(terminal)) {
-					System.out.println("UnaryOpNode expr : ºÒÇÊ¿äÇÑ ¿¬»ê.");
+					System.out.println("UnaryOpNode expr : ë¶ˆí•„ìš”í•œ ì—°ì‚°.");
 					this.error(1);
 				} else {
 					lAddr = this.discTerminal(terminal);
 					if(lAddr == null) {
-						System.out.println("UnaryOpNode expr : Á¸ÀçÇÏÁö ¾Ê´Â º¯¼ö¸í");
+						System.out.println("UnaryOpNode expr : ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ë³€ìˆ˜ëª…");
 						this.error(1);
 					}
 				}
 				this.emitUnary(op, lAddr);
-			} else { // %edx¿¡ ¿Å°Ü ¿¬»êÀ» ¼öÇà ÈÄ %edx°ªÀ» ¸Ş¸ğ¸®¿¡ ¿Å±ä´Ù.
+			} else { // %edxì— ì˜®ê²¨ ì—°ì‚°ì„ ìˆ˜í–‰ í›„ %edxê°’ì„ ë©”ëª¨ë¦¬ì— ì˜®ê¸´ë‹¤.
 				expr.accept(this);
 				this.emitUnary(op, "%edx");
 				if(expr instanceof ArefNode) {
@@ -652,16 +652,16 @@ public class AssembleyGenVisitor implements ASTVisitor {
 					int arrayIndex;
 					if (expr_expr instanceof TerminalExpression) {
 						String expr_expr_term = ((TerminalExpression) expr_expr).t_node.toString();
-						if(this.isNum(expr_expr_term)) { // ++y[1] Çü½Ä.
+						if(this.isNum(expr_expr_term)) { // ++y[1] í˜•ì‹.
 							arrayIndex = Integer.parseInt(expr_expr_term);
 							lAddr = this.discTerminal(lAddr, arrayIndex);
 							System.out.println("	mov	%edx, "+ lAddr);
-						} else { // ¹Ì±¸Çö. ++y[x] Çü½Ä.
-							System.out.println("UnaryOpNode ¹Ì±¸Çö. ++y[x] Çü½Ä.");
+						} else { // ë¯¸êµ¬í˜„. ++y[x] í˜•ì‹.
+							System.out.println("UnaryOpNode ë¯¸êµ¬í˜„. ++y[x] í˜•ì‹.");
 							this.error(1);
 						}
-					} else {  // ¹Ì±¸Çö. ++y[1+2] Çü½Ä.
-						System.out.println("UnaryOpNode ¹Ì±¸Çö. ++y[1+2] Çü½Ä.");
+					} else {  // ë¯¸êµ¬í˜„. ++y[1+2] í˜•ì‹.
+						System.out.println("UnaryOpNode ë¯¸êµ¬í˜„. ++y[1+2] í˜•ì‹.");
 						this.error(1);
 					}	
 				}
@@ -677,10 +677,10 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 	
 	
-	/* º¸Á¶ ¸Ş¼­µå*/
+	/* ë³´ì¡° ë©”ì„œë“œ*/
 	
 	/*************************************
-	 * Expression¿¡¼­ ÀÌÇ×¿¬»ê½Ä¿¡ ´ëÇÑ Ãâ·Â ¸Ş¼­µå.
+	 * Expressionì—ì„œ ì´í•­ì—°ì‚°ì‹ì— ëŒ€í•œ ì¶œë ¥ ë©”ì„œë“œ.
 	 *************************************/
 	private void emitBinaryOp(String op) {
 		// TODO Auto-generated method stub
@@ -704,7 +704,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 
 
 	/*************************************
-	 * Expression¿¡¼­ ´ÜÇ×¿¬»ê½Ä¿¡ ´ëÇÑ Ãâ·Â ¸Ş¼­µå.
+	 * Expressionì—ì„œ ë‹¨í•­ì—°ì‚°ì‹ì— ëŒ€í•œ ì¶œë ¥ ë©”ì„œë“œ.
 	 *************************************/
 	private void emitUnary(String op, String addr) {
 		// TODO Auto-generated method stub
@@ -719,7 +719,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 		case "+":
 		case "!":
 		default :
-			System.out.println("UnaryOpNode Error: ¼³Á¤ÇÏÁö ¾ÊÀº ÄÉÀÌ½º");
+			System.out.println("UnaryOpNode Error: ì„¤ì •í•˜ì§€ ì•Šì€ ì¼€ì´ìŠ¤");
 			this.error(1);
 
 		}
@@ -727,8 +727,8 @@ public class AssembleyGenVisitor implements ASTVisitor {
 
 
 	/*************************************
-	 * Á¶°Ç½Ä¿¡¼­ »ç¿ëÇÏ´Â ¿ÀÆÛ·¹ÀÌ¼Ç¿¡ µû¶ó 
-	 * °¢°¢ÀÇ Á¡ÇÁ¸í·É¾î¸¦ Ãâ·ÂÇÑ´Ù.
+	 * ì¡°ê±´ì‹ì—ì„œ ì‚¬ìš©í•˜ëŠ” ì˜¤í¼ë ˆì´ì…˜ì— ë”°ë¼ 
+	 * ê°ê°ì˜ ì í”„ëª…ë ¹ì–´ë¥¼ ì¶œë ¥í•œë‹¤.
 	 *************************************/
 	private void emitConditionJmp(Expression expr) {
 		// TODO Auto-generated method stub
@@ -762,7 +762,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 	
 	/*************************************
-	 * add, sub¿Í °°Àº ¸í·ÉÀ» Ãâ·Â
+	 * add, subì™€ ê°™ì€ ëª…ë ¹ì„ ì¶œë ¥
 	 *************************************/
 	private void emit1(String op) {
 		// TODO Auto-generated method stub
@@ -771,7 +771,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 
 	/*************************************
-	 * ÇÔ¼ö ¼±¾ğ½Ã ÇÊ¿äÇÑ ¾î¼Àºí¸® ¸í·ÉÀ» Ãâ·Â
+	 * í•¨ìˆ˜ ì„ ì–¸ì‹œ í•„ìš”í•œ ì–´ì…ˆë¸”ë¦¬ ëª…ë ¹ì„ ì¶œë ¥
 	 *************************************/
 	private void emitFunc_Decl_Start(String varName) {
 		// TODO Auto-generated method stub
@@ -782,7 +782,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 
 	/*************************************
-	 * ÇÔ¼ö Á¾·á½Ã ÇÊ¿äÇÑ ¾î¼Àºí¸® ¸í·ÉÀ» Ãâ·Â
+	 * í•¨ìˆ˜ ì¢…ë£Œì‹œ í•„ìš”í•œ ì–´ì…ˆë¸”ë¦¬ ëª…ë ¹ì„ ì¶œë ¥
 	 *************************************/
 	private void emitFunc_Decl_End() {
 		// TODO Auto-generated method stub
@@ -793,7 +793,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 
 
 	/*************************************
-	 * ÅÍ¹Ì³Î ³ëµå°¡ ¼ıÀÚÀÎÁö ¹®ÀÚÀÎÁö¸¦ ÆÇº°ÇÑ´Ù.
+	 * í„°ë¯¸ë„ ë…¸ë“œê°€ ìˆ«ìì¸ì§€ ë¬¸ìì¸ì§€ë¥¼ íŒë³„í•œë‹¤.
 	 *************************************/
 	private boolean isNum(String terminal) {
 		// TODO Auto-generated method stub
@@ -809,16 +809,16 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 
 	/*************************************
-	 * Çü½Ä¿¡ ¾î±ß³­ ÀÔ·ÂÀÌ µé¾î¿ÔÀ» °æ¿ì errorÃ³¸®.
+	 * í˜•ì‹ì— ì–´ê¸‹ë‚œ ì…ë ¥ì´ ë“¤ì–´ì™”ì„ ê²½ìš° errorì²˜ë¦¬.
 	 *************************************/
 	private void error(int errNum) {
 		// TODO Auto-generated method stub
-		System.out.println("¿¡·¯ : " + errNum);
+		System.out.println("ì—ëŸ¬ : " + errNum);
 		System.exit(0);
 	}
 
 	/*************************************
-	 * type¿¡ µû¶ó Å©±â¸¦ ¹İÈ¯ÇÑ´Ù.
+	 * typeì— ë”°ë¼ í¬ê¸°ë¥¼ ë°˜í™˜í•œë‹¤.
 	 *************************************/
 	private int typeSize(int type) {
 		// TODO Auto-generated method stub
@@ -829,7 +829,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 	
 	/************************************************************
-	 * ½É¹úÅ×ÀÌºí¿¡ Å¸ÀÔÀ» ±âÀÔÇÒ ¶§, »ç¿ëÇÏ¸ç, intÇüÀº 1, voidÇüÀº 0À» ¹İÈ¯ÇÑ´Ù.
+	 * ì‹¬ë²Œí…Œì´ë¸”ì— íƒ€ì…ì„ ê¸°ì…í•  ë•Œ, ì‚¬ìš©í•˜ë©°, intí˜•ì€ 1, voidí˜•ì€ 0ì„ ë°˜í™˜í•œë‹¤.
 	 ************************************************************/
 	private int typeCheck(TypeSpecification type) {
 		// TODO Auto-generated method stub
@@ -846,13 +846,13 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	
 	
 	/*******************************************************************
-	 * º¯¼ö¸¦ »ç¿ëÇÒ ¶§, ÇØ´ç º¯¼öÀÇ Á¤º¸¿¡µû¶ó ÂüÁ¶ÇØ¾ßÇÏ´Â ·¹Áö½ºÅÍ³ª ÁÖ¼Ò°¡ ´Ş¶óÁö°Ô µÈ´Ù.
-	 * ¿¹¸¦µé¸é, Áö¿ªº¯¼öÀÇ °æ¿ì espÀÇ 0¹øÂ°ºÎÅÍ ½ÃÀÛÇÏ¸ç, ¸Å°³º¯¼öÀÇ °æ¿ì 8(%ebp)ºÎÅÍ 
-	 * ½ÃÀÛÇÑ´Ù.
-	 * discTerminal()´Â ÁÖ¾îÁø ÀÌ¸§À¸·Î ½ÃÀÛÇÏ´Â º¯¼ö¸¦ ½É¹úÅ×ÀÌºí¿¡¼­ Ã£¾Æ Á¾·ù¸¦ ÆÄ¾ÇÇÏ°í,
-	 * ±×¿¡ ¸Â´Â ÀûÀıÇÑ ÁÖ¼Ò¸¦ ¹İÈ¯ÇØÁÖ´Â ¿ªÇÒÀ» ÇÑ´Ù.
-	 * ¹è¿­ÀÏ °æ¿ì indexµµ ÇÊ¿äÇÏ¹Ç·Î ¿À¹ö·ÎµùÇÏ¿© µÎ ¸Ş¼­µå·Î ³ª´©¾î ÀÛ¼ºÇß´Ù.
-	 * ½Éº¼ÀÌ ÆÄ¶ó¹ÌÅÍÀÎ °æ¿ì value¿¡´Â ÆÄ¶ó¹ÌÅÍ ÀÎµ¦½º(1ºÎÅÍ ½ÃÀÛ)°¡ µé¾îÀÖ´Ù.
+	 * ë³€ìˆ˜ë¥¼ ì‚¬ìš©í•  ë•Œ, í•´ë‹¹ ë³€ìˆ˜ì˜ ì •ë³´ì—ë”°ë¼ ì°¸ì¡°í•´ì•¼í•˜ëŠ” ë ˆì§€ìŠ¤í„°ë‚˜ ì£¼ì†Œê°€ ë‹¬ë¼ì§€ê²Œ ëœë‹¤.
+	 * ì˜ˆë¥¼ë“¤ë©´, ì§€ì—­ë³€ìˆ˜ì˜ ê²½ìš° espì˜ 0ë²ˆì§¸ë¶€í„° ì‹œì‘í•˜ë©°, ë§¤ê°œë³€ìˆ˜ì˜ ê²½ìš° 8(%ebp)ë¶€í„° 
+	 * ì‹œì‘í•œë‹¤.
+	 * discTerminal()ëŠ” ì£¼ì–´ì§„ ì´ë¦„ìœ¼ë¡œ ì‹œì‘í•˜ëŠ” ë³€ìˆ˜ë¥¼ ì‹¬ë²Œí…Œì´ë¸”ì—ì„œ ì°¾ì•„ ì¢…ë¥˜ë¥¼ íŒŒì•…í•˜ê³ ,
+	 * ê·¸ì— ë§ëŠ” ì ì ˆí•œ ì£¼ì†Œë¥¼ ë°˜í™˜í•´ì£¼ëŠ” ì—­í• ì„ í•œë‹¤.
+	 * ë°°ì—´ì¼ ê²½ìš° indexë„ í•„ìš”í•˜ë¯€ë¡œ ì˜¤ë²„ë¡œë”©í•˜ì—¬ ë‘ ë©”ì„œë“œë¡œ ë‚˜ëˆ„ì–´ ì‘ì„±í–ˆë‹¤.
+	 * ì‹¬ë³¼ì´ íŒŒë¼ë¯¸í„°ì¸ ê²½ìš° valueì—ëŠ” íŒŒë¼ë¯¸í„° ì¸ë±ìŠ¤(1ë¶€í„° ì‹œì‘)ê°€ ë“¤ì–´ìˆë‹¤.
 	 *******************************************************************/
 	public String discTerminal(String name, int index) {
 		int symIndex = this.symTab.lookUp(name);
@@ -886,13 +886,13 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	}
 	
 	/*******************************************************************
-	 * º¯¼ö¸¦ »ç¿ëÇÒ ¶§, ÇØ´ç º¯¼öÀÇ Á¤º¸¿¡µû¶ó ÂüÁ¶ÇØ¾ßÇÏ´Â ·¹Áö½ºÅÍ³ª ÁÖ¼Ò°¡ ´Ş¶óÁö°Ô µÈ´Ù.
-	 * ¿¹¸¦µé¸é, Áö¿ªº¯¼öÀÇ °æ¿ì espÀÇ 0¹øÂ°ºÎÅÍ ½ÃÀÛÇÏ¸ç, ¸Å°³º¯¼öÀÇ °æ¿ì 8(%ebp)ºÎÅÍ 
-	 * ½ÃÀÛÇÑ´Ù.
-	 * discTerminal()´Â ÁÖ¾îÁø ÀÌ¸§À¸·Î ½ÃÀÛÇÏ´Â º¯¼ö¸¦ ½É¹úÅ×ÀÌºí¿¡¼­ Ã£¾Æ Á¾·ù¸¦ ÆÄ¾ÇÇÏ°í,
-	 * ±×¿¡ ¸Â´Â ÀûÀıÇÑ ÁÖ¼Ò¸¦ ¹İÈ¯ÇØÁÖ´Â ¿ªÇÒÀ» ÇÑ´Ù.
-	 * ¹è¿­ÀÏ °æ¿ì indexµµ ÇÊ¿äÇÏ¹Ç·Î ¿À¹ö·ÎµùÇÏ¿© µÎ ¸Ş¼­µå·Î ³ª´©¾î ÀÛ¼ºÇß´Ù.
-	 * ½Éº¼ÀÌ ÆÄ¶ó¹ÌÅÍÀÎ °æ¿ì value¿¡´Â ÆÄ¶ó¹ÌÅÍ ÀÎµ¦½º(1ºÎÅÍ ½ÃÀÛ)°¡ µé¾îÀÖ´Ù.
+	 * ë³€ìˆ˜ë¥¼ ì‚¬ìš©í•  ë•Œ, í•´ë‹¹ ë³€ìˆ˜ì˜ ì •ë³´ì—ë”°ë¼ ì°¸ì¡°í•´ì•¼í•˜ëŠ” ë ˆì§€ìŠ¤í„°ë‚˜ ì£¼ì†Œê°€ ë‹¬ë¼ì§€ê²Œ ëœë‹¤.
+	 * ì˜ˆë¥¼ë“¤ë©´, ì§€ì—­ë³€ìˆ˜ì˜ ê²½ìš° espì˜ 0ë²ˆì§¸ë¶€í„° ì‹œì‘í•˜ë©°, ë§¤ê°œë³€ìˆ˜ì˜ ê²½ìš° 8(%ebp)ë¶€í„° 
+	 * ì‹œì‘í•œë‹¤.
+	 * discTerminal()ëŠ” ì£¼ì–´ì§„ ì´ë¦„ìœ¼ë¡œ ì‹œì‘í•˜ëŠ” ë³€ìˆ˜ë¥¼ ì‹¬ë²Œí…Œì´ë¸”ì—ì„œ ì°¾ì•„ ì¢…ë¥˜ë¥¼ íŒŒì•…í•˜ê³ ,
+	 * ê·¸ì— ë§ëŠ” ì ì ˆí•œ ì£¼ì†Œë¥¼ ë°˜í™˜í•´ì£¼ëŠ” ì—­í• ì„ í•œë‹¤.
+	 * ë°°ì—´ì¼ ê²½ìš° indexë„ í•„ìš”í•˜ë¯€ë¡œ ì˜¤ë²„ë¡œë”©í•˜ì—¬ ë‘ ë©”ì„œë“œë¡œ ë‚˜ëˆ„ì–´ ì‘ì„±í–ˆë‹¤.
+	 * ì‹¬ë³¼ì´ íŒŒë¼ë¯¸í„°ì¸ ê²½ìš° valueì—ëŠ” íŒŒë¼ë¯¸í„° ì¸ë±ìŠ¤(1ë¶€í„° ì‹œì‘)ê°€ ë“¤ì–´ìˆë‹¤.
 	 *******************************************************************/
 	public String discTerminal(String name) {
 		int symIndex = this.symTab.lookUp(name);
@@ -914,12 +914,12 @@ public class AssembleyGenVisitor implements ASTVisitor {
 			case "PARAMETER" :
 				result = (4+4*r.getValue())+"(%ebp)";
 				break;
-			case "VARARR" : // ÀÎÀÚ·Î Àü¿ª¹è¿­À» ³ÖÀ» °æ¿ì ÁÖ¼Ò¸¦ Àü´Ş
+			case "VARARR" : // ì¸ìë¡œ ì „ì—­ë°°ì—´ì„ ë„£ì„ ê²½ìš° ì£¼ì†Œë¥¼ ì „ë‹¬
 				result = "$"+r.getName();
 				System.out.println("	lea	$"+r.getName()+", %edx");
 				result = "%edx"; 
 				break;
-			case "LOCVARARR" : //// ÀÎÀÚ·Î Áö¿ª¹è¿­À» ³ÖÀ» °æ¿ì ÁÖ¼Ò¸¦ Àü´Ş
+			case "LOCVARARR" : //// ì¸ìë¡œ ì§€ì—­ë°°ì—´ì„ ë„£ì„ ê²½ìš° ì£¼ì†Œë¥¼ ì „ë‹¬
 				varOffset = r.getOffset();
 				System.out.println("	lea	"+(varOffset)+"(%esp), %edx");
 				result = "%edx"; 
