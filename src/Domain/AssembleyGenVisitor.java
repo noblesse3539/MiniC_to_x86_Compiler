@@ -303,9 +303,7 @@ public class AssembleyGenVisitor implements ASTVisitor {
 	
 	/**************************************************
 	 * 중괄호{} 로 이루어진 블럭단위 문장이다.
-	 * C언어의 특징인 지역변수 선언이 함수의 가장 위에서만 이루어지는 것을
-	 * 구현하기 위해 복합문 내에선 변수선언을 무효로 하고 Statement만 
-	 * 처리한다.
+	 * 함수 선언부 최상단의 변수선언에 대해서만 허용했다. 수정 
 	 **************************************************/
 	@Override
 	public void visitCompound_Statement(Compound_Statement node) {
